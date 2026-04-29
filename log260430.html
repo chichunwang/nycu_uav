@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NYCU UAV BLOG</title>
+<style>
+body {
+    font-family: Consolas, 'Courier New', monospace;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+    line-height: 1.75;
+    color: #111;
+}
+header {
+    background: #0073e6;
+    color: white;
+    padding: 18px 20px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+header h1 {
+    margin: 0;
+    font-size: 2rem;
+    color: white;
+}
+main {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 20px 0 28px;
+}
+section {
+    margin: 20px;
+    padding: 20px 24px;
+    background: white;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+section h2 {
+    margin-top: 0;
+    margin-bottom: 14px;
+    color: #1f2937;
+    font-size: 1.5rem;
+    border-left: 5px solid #0073e6;
+    padding-left: 10px;
+}
+h3, h4 {
+    color: #333;
+    margin-top: 1.1em;
+    margin-bottom: 0.4em;
+}
+p, li {
+    color: #000;
+}
+pre, code {
+    font-family: Consolas, 'Courier New', monospace;
+}
+pre {
+    background: #f8fafc;
+    color: #111827;
+    border: 1px solid #dbe3ea;
+    border-radius: 5px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    line-height: 1.5;
+}
+code {
+    background: #eef3f8;
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+}
+pre code {
+    background: transparent;
+    padding: 0;
+}
+/* Syntax colors for Pandoc token classes */
+pre.sourceCode code span.bu { color: #2563eb; font-weight: 600; }
+pre.sourceCode code span.fu { color: #0f766e; font-weight: 600; }
+pre.sourceCode code span.at { color: #7c3aed; }
+pre.sourceCode code span.kw { color: #b91c1c; font-weight: 600; }
+pre.sourceCode code span.op { color: #be185d; }
+pre.sourceCode code span.st { color: #166534; }
+pre.sourceCode code span.va { color: #92400e; }
+pre.sourceCode code span.ex { color: #0f766e; font-weight: 600; }
+pre.sourceCode code span.dv { color: #b45309; }
+pre.sourceCode code span.co { color: #64748b; font-style: italic; }
+pre.sourceCode code span.sc { color: #15803d; }
+pre.sourceCode code span.im { color: #1d4ed8; }
+pre.sourceCode code a {
+    color: inherit;
+    text-decoration: none;
+}
+a {
+    color: #0073e6;
+}
+ul, ol {
+    padding-left: 1.4rem;
+}
+blockquote {
+    border-left: 4px solid #0073e6;
+    margin: 1em 0;
+    padding: 0.2em 1em;
+    background: #f8fbff;
+}
+footer {
+    text-align: center;
+    padding: 10px;
+    background: #0073e6;
+    color: white;
+    margin-top: 20px;
+}
+footer a {
+    color: white;
+    text-decoration: none;
+}
+</style>
+</head>
+<body>
+<header><h1>UAV大飛機-航電組開發流程04/30</h1></header>
+<main>
+<section><h2>本次目標</h2><ul>
+<li><code>sensor_combined_listener</code> 能穩定收到
+<code>/fmu/out/sensor_combined</code>，而且訂閱時要用<code>rmw_qos_profile_sensor_data</code>，因為
+PX4 publisher 的 QoS 跟 ROS 2 預設 subscriber QoS 不相容。</li>
+<li><code>offboard_control</code> 官方範例可以正常起飛到 5 m
+並保持。官方範例本身就是用來驗證 ROS 2 ↔︎ PX4 ↔︎ uXRCE-DDS
+這條鏈有通。</li>
+</ul></section>
+<section><h2>編寫 offboard mode 程式碼</h2><p>複製官方offbaoard範例 做成自己的package</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a aria-hidden="true" href="#cb1-1" tabindex="-1"></a><span class="bu">cd</span> ~/ws_offbaord_control/src</span>
+<span id="cb1-2"><a aria-hidden="true" href="#cb1-2" tabindex="-1"></a><span class="ex">ros2</span> pkg create <span class="at">--build-type</span> ament_cmake my_offbaord_cpp <span class="at">--dependencies</span> rclcpp px4_msgs</span></code></pre></div></section>
+<section><h2>offboard mode 結構</h2><p>檔名:src/examples/offbaord/offboard_control.cpp 類別:class
+OffboardControl: public rclcpp::Node
+main()裡面只做rclcpp::init()、spin()、shutdown()</p></section>
+<section><h2>node 介紹</h2><p>三個publisher:</p>
+<ul>
+<li>/fmu/in/offboard_control_mode</li>
+<li>/fmu/in/trajectory_setpoint</li>
+<li>/fmu/in/vehicle_command</li>
+</ul>
+<p>重要成員</p>
+<ul>
+<li>timer_</li>
+<li>offboard_setpoint_counter_</li>
+</ul></section>
+<section><h2>建構子 OffboardControl() 在做什麼</h2><ul>
+<li>建立三個publisher</li>
+<li>把offboard_setpoint_counter_設成0</li>
+<li>建立一個100 ms timer</li>
+</ul></section>
+<section><h2>timer callback</h2><p>流程幾乎都在callback裡</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode c++"><code class="sourceCode cpp"><span id="cb2-1"><a aria-hidden="true" href="#cb2-1" tabindex="-1"></a><span class="kw">auto</span> timer_callback <span class="op">=</span> <span class="op">[</span><span class="kw">this</span><span class="op">]()</span> <span class="op">-</span> <span class="op">&gt;</span> <span class="dt">void</span> <span class="op">{</span></span>
+<span id="cb2-2"><a aria-hidden="true" href="#cb2-2" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span><span class="va">offboard_setpoint_counter_</span> <span class="op">==</span> <span class="dv">10</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-3"><a aria-hidden="true" href="#cb2-3" tabindex="-1"></a>        publish_vehicle_command<span class="op">(...</span>切到 offboard<span class="op">...);</span></span>
+<span id="cb2-4"><a aria-hidden="true" href="#cb2-4" tabindex="-1"></a>        arm<span class="op">();</span></span>
+<span id="cb2-5"><a aria-hidden="true" href="#cb2-5" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-6"><a aria-hidden="true" href="#cb2-6" tabindex="-1"></a>    publish_offboard_control_mode<span class="op">();</span></span>
+<span id="cb2-7"><a aria-hidden="true" href="#cb2-7" tabindex="-1"></a>    publish_trajectory_setpoint<span class="op">();</span></span>
+<span id="cb2-8"><a aria-hidden="true" href="#cb2-8" tabindex="-1"></a></span>
+<span id="cb2-9"><a aria-hidden="true" href="#cb2-9" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span><span class="va">offboard_setpoint_counter_</span> <span class="op">&lt;</span> <span class="dv">11</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-10"><a aria-hidden="true" href="#cb2-10" tabindex="-1"></a>        <span class="va">offboard_setpoint_counter_</span><span class="op">++;</span></span>
+<span id="cb2-11"><a aria-hidden="true" href="#cb2-11" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-12"><a aria-hidden="true" href="#cb2-12" tabindex="-1"></a><span class="op">}</span></span></code></pre></div></section>
+</main>
+<footer><a href="index.html">主頁</a></footer>
+</body></html>
