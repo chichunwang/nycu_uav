@@ -128,10 +128,10 @@ PX4 publisher 的 QoS 跟 ROS 2 預設 subscriber QoS 不相容。</li>
 並保持。官方範例本身就是用來驗證 ROS 2 ↔︎ PX4 ↔︎ uXRCE-DDS
 這條鏈有通。</li>
 </ul></section>
-<section><h2>編寫 offboard mode 程式碼</h2><p>複製官方offbaoard範例 做成自己的package</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a aria-hidden="true" href="#cb1-1" tabindex="-1"></a><span class="bu">cd</span> ~/ws_offbaord_control/src</span>
-<span id="cb1-2"><a aria-hidden="true" href="#cb1-2" tabindex="-1"></a><span class="ex">ros2</span> pkg create <span class="at">--build-type</span> ament_cmake my_offbaord_cpp <span class="at">--dependencies</span> rclcpp px4_msgs</span></code></pre></div></section>
-<section><h2>offboard mode 結構</h2><p>檔名:src/examples/offbaord/offboard_control.cpp 類別:class
+<section><h2>編寫 offboard mode 程式碼</h2><p>複製官方offboard範例 做成自己的package</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a aria-hidden="true" href="#cb1-1" tabindex="-1"></a><span class="bu">cd</span> ~/ws_offboard_control/src</span>
+<span id="cb1-2"><a aria-hidden="true" href="#cb1-2" tabindex="-1"></a><span class="ex">ros2</span> pkg create <span class="at">--build-type</span> ament_cmake my_offboard_cpp <span class="at">--dependencies</span> rclcpp px4_msgs</span></code></pre></div></section>
+<section><h2>offboard mode 結構</h2><p>檔名:src/examples/offboard/offboard_control.cpp 類別:class
 OffboardControl: public rclcpp::Node
 main()裡面只做rclcpp::init()、spin()、shutdown()</p></section>
 <section><h2>node 介紹</h2><p>三個publisher:</p>
