@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NYCU UAV BLOG</title>
+<style>
+body {
+    font-family: Consolas, 'Courier New', monospace;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+    line-height: 1.75;
+    color: #111;
+}
+header {
+    position: relative;
+    background: #0073e6;
+    color: white;
+    padding: 18px 20px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+header h1 {
+    margin: 0;
+    font-size: 2rem;
+    color: white;
+}
+.home-button {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-block;
+    padding: 8px 14px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #0073e6;
+    text-decoration: none;
+    font-weight: 700;
+    line-height: 1;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+.home-button:hover {
+    background: white;
+}
+@media (max-width: 640px) {
+    header {
+        padding-top: 14px;
+        padding-bottom: 18px;
+    }
+    .home-button {
+        position: static;
+        transform: none;
+        margin-bottom: 12px;
+    }
+}
+main {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 20px 0 28px;
+}
+section {
+    margin: 20px;
+    padding: 20px 24px;
+    background: white;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+section h2 {
+    margin-top: 0;
+    margin-bottom: 14px;
+    color: #1f2937;
+    font-size: 1.5rem;
+    border-left: 5px solid #0073e6;
+    padding-left: 10px;
+}
+h3, h4 {
+    color: #333;
+    margin-top: 1.1em;
+    margin-bottom: 0.4em;
+}
+p, li {
+    color: #000;
+}
+pre, code {
+    font-family: Consolas, 'Courier New', monospace;
+}
+pre {
+    background: #f8fafc;
+    color: #111827;
+    border: 1px solid #dbe3ea;
+    border-radius: 5px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    line-height: 1.5;
+}
+code {
+    background: #eef3f8;
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+}
+pre code {
+    background: transparent;
+    padding: 0;
+}
+/* Syntax colors for Pandoc token classes */
+pre.sourceCode code span.bu { color: #2563eb; font-weight: 600; }
+pre.sourceCode code span.fu { color: #0f766e; font-weight: 600; }
+pre.sourceCode code span.at { color: #7c3aed; }
+pre.sourceCode code span.kw { color: #b91c1c; font-weight: 600; }
+pre.sourceCode code span.op { color: #be185d; }
+pre.sourceCode code span.st { color: #166534; }
+pre.sourceCode code span.va { color: #92400e; }
+pre.sourceCode code span.ex { color: #0f766e; font-weight: 600; }
+pre.sourceCode code span.dv { color: #b45309; }
+pre.sourceCode code span.co { color: #64748b; font-style: italic; }
+pre.sourceCode code span.sc { color: #15803d; }
+pre.sourceCode code span.im { color: #1d4ed8; }
+pre.sourceCode code a {
+    color: inherit;
+    text-decoration: none;
+}
+a {
+    color: #0073e6;
+}
+ul, ol {
+    padding-left: 1.4rem;
+}
+blockquote {
+    border-left: 4px solid #0073e6;
+    margin: 1em 0;
+    padding: 0.2em 1em;
+    background: #f8fbff;
+}
+footer {
+    text-align: center;
+    padding: 10px;
+    background: #0073e6;
+    color: white;
+    margin-top: 20px;
+}
+footer a {
+    color: white;
+    text-decoration: none;
+}
+    </style>
+    </head>
+    <body>
+    <header><a class="home-button" href="index.html">← 回到主頁</a><h1>UAV大飛機-馬達架開發05/09</h1></header>
+    <main>
+    <section><h2>本次目標</h2><ul>
+    <li>修復與重整馬達架</li>
+    <li>硬體優化測量模組</li>
+    <li>軟體優化韌體與UI</li>
+    </ul></section>
+    <section><h2>UI設計</h2>
+    <h3>建立開發環境</h3>
+    <p>安裝</p>
+    <div class="sourceCode" id="cb1"><pre
+    class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install pyserial pyside6 pyqtgraph</span></code></pre></div>
+    <p>建立範例 esp32_ui.py(注意這只是範例，實際應用時需要根據具體需求進行修改)</p>
+    <div class="sourceCode" id="cb2"><pre
+    class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
+    <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> csv</span>
+    <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
+    <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datetime <span class="im">import</span> datetime</span>
+    <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> serial</span>
+    <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> serial.tools.list_ports</span>
+    <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> PySide6.QtWidgets <span class="im">import</span> (</span>
+    <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    QApplication, QWidget, QVBoxLayout, QHBoxLayout,</span>
+    <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    QPushButton, QComboBox, QLabel, QSlider, QFileDialog</span>
+    <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>)</span>
+    <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> PySide6.QtCore <span class="im">import</span> QTimer, Qt</span>
+    <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pyqtgraph <span class="im">as</span> pg</span>
+    <span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ESP32ControlUI(QWidget):</span>
+    <span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>):</span>
+    <span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+    <span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.setWindowTitle(<span class="st">&quot;ESP32 Sensor Control UI&quot;</span>)</span>
+    <span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.resize(<span class="dv">900</span>, <span class="dv">600</span>)</span>
+    <span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.ser <span class="op">=</span> <span class="va">None</span></span>
+    <span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.rows <span class="op">=</span> []</span>
+    <span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.time_data <span class="op">=</span> []</span>
+    <span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.temp_data <span class="op">=</span> []</span>
+    <span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.build_ui()</span>
+    <span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.timer <span class="op">=</span> QTimer()</span>
+    <span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.timer.timeout.<span class="ex">connect</span>(<span class="va">self</span>.read_serial_data)</span>
+    <span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.timer.start(<span class="dv">20</span>)</span>
+    <span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> build_ui(<span class="va">self</span>):</span>
+    <span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>        main_layout <span class="op">=</span> QVBoxLayout()</span>
+    <span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>        <span class="co"># ---------- Serial control ----------</span></span>
+    <span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>        serial_layout <span class="op">=</span> QHBoxLayout()</span>
+    <span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.port_combo <span class="op">=</span> QComboBox()</span>
+    <span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.refresh_ports()</span>
+    <span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.refresh_button <span class="op">=</span> QPushButton(<span class="st">&quot;重新整理 Port&quot;</span>)</span>
+    <span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.refresh_button.clicked.<span class="ex">connect</span>(<span class="va">self</span>.refresh_ports)</span>
+    <span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.connect_button <span class="op">=</span> QPushButton(<span class="st">&quot;連線&quot;</span>)</span>
+    <span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.connect_button.clicked.<span class="ex">connect</span>(<span class="va">self</span>.toggle_connection)</span>
+    <span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>        serial_layout.addWidget(QLabel(<span class="st">&quot;Serial Port:&quot;</span>))</span>
+    <span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>        serial_layout.addWidget(<span class="va">self</span>.port_combo)</span>
+    <span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>        serial_layout.addWidget(<span class="va">self</span>.refresh_button)</span>
+    <span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>        serial_layout.addWidget(<span class="va">self</span>.connect_button)</span>
+    <span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>        main_layout.addLayout(serial_layout)</span>
+    <span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>        <span class="co"># ---------- Command buttons ----------</span></span>
+    <span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>        command_layout <span class="op">=</span> QHBoxLayout()</span>
+    <span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.start_button <span class="op">=</span> QPushButton(<span class="st">&quot;START&quot;</span>)</span>
+    <span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.start_button.clicked.<span class="ex">connect</span>(<span class="kw">lambda</span>: <span class="va">self</span>.send_command(<span class="st">&quot;START&quot;</span>))</span>
+    <span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.stop_button <span class="op">=</span> QPushButton(<span class="st">&quot;STOP&quot;</span>)</span>
+    <span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.stop_button.clicked.<span class="ex">connect</span>(<span class="kw">lambda</span>: <span class="va">self</span>.send_command(<span class="st">&quot;STOP&quot;</span>))</span>
+    <span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.export_button <span class="op">=</span> QPushButton(<span class="st">&quot;匯出 CSV&quot;</span>)</span>
+    <span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.export_button.clicked.<span class="ex">connect</span>(<span class="va">self</span>.export_csv)</span>
+    <span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>        command_layout.addWidget(<span class="va">self</span>.start_button)</span>
+    <span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>        command_layout.addWidget(<span class="va">self</span>.stop_button)</span>
+    <span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a>        command_layout.addWidget(<span class="va">self</span>.export_button)</span>
+    <span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>        main_layout.addLayout(command_layout)</span>
+    <span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a>        <span class="co"># ---------- PWM slider ----------</span></span>
+    <span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a>        pwm_layout <span class="op">=</span> QHBoxLayout()</span>
+    <span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.pwm_label <span class="op">=</span> QLabel(<span class="st">&quot;PWM: 0&quot;</span>)</span>
+    <span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.pwm_slider <span class="op">=</span> QSlider(Qt.Horizontal)</span>
+    <span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.pwm_slider.setMinimum(<span class="dv">0</span>)</span>
+    <span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.pwm_slider.setMaximum(<span class="dv">255</span>)</span>
+    <span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.pwm_slider.setValue(<span class="dv">0</span>)</span>
+    <span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.pwm_slider.valueChanged.<span class="ex">connect</span>(<span class="va">self</span>.update_pwm)</span>
+    <span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a>        pwm_layout.addWidget(<span class="va">self</span>.pwm_label)</span>
+    <span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a>        pwm_layout.addWidget(<span class="va">self</span>.pwm_slider)</span>
+    <span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a>        main_layout.addLayout(pwm_layout)</span>
+    <span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a>        <span class="co"># ---------- Latest data ----------</span></span>
+    <span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.data_label <span class="op">=</span> QLabel(<span class="st">&quot;尚未收到資料&quot;</span>)</span>
+    <span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a>        main_layout.addWidget(<span class="va">self</span>.data_label)</span>
+    <span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a>        <span class="co"># ---------- Plot ----------</span></span>
+    <span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.plot_widget <span class="op">=</span> pg.PlotWidget()</span>
+    <span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.plot_widget.setTitle(<span class="st">&quot;Temperature&quot;</span>)</span>
+    <span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.plot_widget.setLabel(<span class="st">&quot;left&quot;</span>, <span class="st">&quot;Temp&quot;</span>, units<span class="op">=</span><span class="st">&quot;C&quot;</span>)</span>
+    <span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.plot_widget.setLabel(<span class="st">&quot;bottom&quot;</span>, <span class="st">&quot;Time&quot;</span>, units<span class="op">=</span><span class="st">&quot;s&quot;</span>)</span>
+    <span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.temp_curve <span class="op">=</span> <span class="va">self</span>.plot_widget.plot(<span class="va">self</span>.time_data, <span class="va">self</span>.temp_data)</span>
+    <span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a>        main_layout.addWidget(<span class="va">self</span>.plot_widget)</span>
+    <span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.setLayout(main_layout)</span>
+    <span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> refresh_ports(<span class="va">self</span>):</span>
+    <span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.port_combo.clear()</span>
+    <span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a>        ports <span class="op">=</span> serial.tools.list_ports.comports()</span>
+    <span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> port <span class="kw">in</span> ports:</span>
+    <span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.port_combo.addItem(port.device)</span>
+    <span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-117"><a href="#cb2-117" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> toggle_connection(<span class="va">self</span>):</span>
+    <span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">self</span>.ser <span class="kw">is</span> <span class="va">None</span>:</span>
+    <span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a>            port <span class="op">=</span> <span class="va">self</span>.port_combo.currentText()</span>
+    <span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="kw">not</span> port:</span>
+    <span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a>                <span class="va">self</span>.data_label.setText(<span class="st">&quot;找不到 Serial Port&quot;</span>)</span>
+    <span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span></span>
+    <span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a>            <span class="cf">try</span>:</span>
+    <span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a>                <span class="va">self</span>.ser <span class="op">=</span> serial.Serial(port, <span class="dv">115200</span>, timeout<span class="op">=</span><span class="fl">0.01</span>)</span>
+    <span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a>                <span class="va">self</span>.connect_button.setText(<span class="st">&quot;斷線&quot;</span>)</span>
+    <span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a>                <span class="va">self</span>.data_label.setText(<span class="ss">f&quot;已連線到 </span><span class="sc">{</span>port<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+    <span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a>            <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
+    <span id="cb2-130"><a href="#cb2-130" aria-hidden="true" tabindex="-1"></a>                <span class="va">self</span>.data_label.setText(<span class="ss">f&quot;連線失敗: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+    <span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a></span>
+        <span class="cf">else</span>:</span>
+    <span id="cb2-133"><a href="#cb2-133" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.ser.close()</span>
+    <span id="cb2-134"><a href="#cb2-134" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.ser <span class="op">=</span> <span class="va">None</span></span>
+    <span id="cb2-135"><a href="#cb2-135" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.connect_button.setText(<span class="st">&quot;連線&quot;</span>)</span>
+    <span id="cb2-136"><a href="#cb2-136" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.data_label.setText(<span class="st">&quot;已斷線&quot;</span>)</span>
+    <span id="cb2-137"><a href="#cb2-137" aria-hidden="true" tabindex="-1"></a></span>
+      <span class="kw">def</span> send_command(<span class="va">self</span>, command):</span>
+    <span id="cb2-139"><a href="#cb2-139" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">self</span>.ser <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> <span class="va">self</span>.ser.is_open:</span>
+    <span id="cb2-140"><a href="#cb2-140" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.ser.write((command <span class="op">+</span> <span class="st">"</span><span class="ch">\n</span><span class="st">"</span>).encode(<span class="st">"utf-8"</span>))</span>
+    <span id="cb2-141"><a href="#cb2-141" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+    <span id="cb2-142"><a href="#cb2-142" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.data_label.setText(<span class="st">"尚未連線，無法送出指令"</span>)</span>
+    <span id="cb2-143"><a href="#cb2-143" aria-hidden="true" tabindex="-1"></a></span>
+      <span class="kw">def</span> update_pwm(<span class="va">self</span>, value):</span>
+    <span id="cb2-145"><a href="#cb2-145" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.pwm_label.setText(<span class="ss">f&quot;PWM: </span><span class="sc">{</span>value<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+    <span id="cb2-146"><a href="#cb2-146" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.send_command(<span class="ss">f&quot;SET_PWM </span><span class="sc">{</span>value<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+    <span id="cb2-147"><a href="#cb2-147" aria-hidden="true" tabindex="-1"></a></span>
+      <span class="kw">def</span> read_serial_data(<span class="va">self</span>):</span>
+    <span id="cb2-149"><a href="#cb2-149" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">self</span>.ser <span class="kw">is</span> <span class="va">None</span>:</span>
+    <span id="cb2-150"><a href="#cb2-150" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span></span>
+    <span id="cb2-151"><a href="#cb2-151" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-152"><a href="#cb2-152" aria-hidden="true" tabindex="-1"></a>        <span class="cf">try</span>:</span>
+    <span id="cb2-153"><a href="#cb2-153" aria-hidden="true" tabindex="-1"></a>            <span class="cf">while</span> <span class="va">self</span>.ser.in_waiting:</span>
+    <span id="cb2-154"><a href="#cb2-154" aria-hidden="true" tabindex="-1"></a>                line <span class="op">=</span> <span class="va">self</span>.ser.readline().decode(<span class="st">"utf-8"</span>, errors<span class="op">=</span><span class="st">"ignore"</span>).strip()</span>
+    <span id="cb2-155"><a href="#cb2-155" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-156"><a href="#cb2-156" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> <span class="kw">not</span> line:</span>
+    <span id="cb2-157"><a href="#cb2-157" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">continue</span></span>
+    <span id="cb2-158"><a href="#cb2-158" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-159"><a href="#cb2-159" aria-hidden="true" tabindex="-1"></a>                <span class="va">self</span>.handle_line(line)</span>
+    <span id="cb2-160"><a href="#cb2-160" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-161"><a href="#cb2-161" aria-hidden="true" tabindex="-1"></a>        <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
+    <span id="cb2-162"><a href="#cb2-162" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.data_label.setText(<span class="ss">f&quot;讀取錯誤: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+    <span id="cb2-163"><a href="#cb2-163" aria-hidden="true" tabindex="-1"></a></span>
+      <span class="kw">def</span> handle_line(<span class="va">self</span>, line):</span>
+    <span id="cb2-165"><a href="#cb2-165" aria-hidden="true" tabindex="-1"></a>        <span class="co"># ESP32 傳來：</span></span>
+    <span id="cb2-166"><a href="#cb2-166" aria-hidden="true" tabindex="-1"></a>        <span class="co"># DATA,12345,26.4,0.01,-0.02,9.81</span></span>
+    <span id="cb2-167"><a href="#cb2-167" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-168"><a href="#cb2-168" aria-hidden="true" tabindex="-1"></a>        parts <span class="op">=</span> line.split(<span class="st">","</span>)</span>
+    <span id="cb2-169"><a href="#cb2-169" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-170"><a href="#cb2-170" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> parts[<span class="dv">0</span>] <span class="op">==</span> <span class="st">"DATA"</span> <span class="kw">and</span> <span class="bu">len</span>(parts) <span class="op">==</span> <span class="dv">6</span>:</span>
+    <span id="cb2-171"><a href="#cb2-171" aria-hidden="true" tabindex="-1"></a>            esp_time_ms <span class="op">=</span> <span class="bu">int</span>(parts[<span class="dv">1</span>])</span>
+    <span id="cb2-172"><a href="#cb2-172" aria-hidden="true" tabindex="-1"></a>            temp <span class="op">=</span> <span class="bu">float</span>(parts[<span class="dv">2</span>])</span>
+    <span id="cb2-173"><a href="#cb2-173" aria-hidden="true" tabindex="-1"></a>            ax <span class="op">=</span> <span class="bu">float</span>(parts[<span class="dv">3</span>])</span>
+    <span id="cb2-174"><a href="#cb2-174" aria-hidden="true" tabindex="-1"></a>            ay <span class="op">=</span> <span class="bu">float</span>(parts[<span class="dv">4</span>])</span>
+    <span id="cb2-175"><a href="#cb2-175" aria-hidden="true" tabindex="-1"></a>            az <span class="op">=</span> <span class="bu">float</span>(parts[<span class="dv">5</span>])</span>
+    <span id="cb2-176"><a href="#cb2-176" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-177"><a href="#cb2-177" aria-hidden="true" tabindex="-1"></a>            pc_time <span class="op">=</span> datetime.now().strftime(<span class="st">"%Y-%m-</span><span class="sc">%d</span><span class="st"> %H:%M:%S.</span><span class="sc">%f</span><span class="st">"</span>)[:<span class="op">-</span><span class="dv">3</span>]</span>
+    <span id="cb2-178"><a href="#cb2-178" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-179"><a href="#cb2-179" aria-hidden="true" tabindex="-1"></a>            row <span class="op">=</span> {</span>
+    <span id="cb2-180"><a href="#cb2-180" aria-hidden="true" tabindex="-1"></a>                <span class="st">"pc_time"</span>: pc_time,</span>
+    <span id="cb2-181"><a href="#cb2-181" aria-hidden="true" tabindex="-1"></a>                <span class="st">"esp_time_ms"</span>: esp_time_ms,</span>
+    <span id="cb2-182"><a href="#cb2-182" aria-hidden="true" tabindex="-1"></a>                <span class="st">"temp"</span>: temp,</span>
+    <span id="cb2-183"><a href="#cb2-183" aria-hidden="true" tabindex="-1"></a>                <span class="st">"ax"</span>: ax,</span>
+    <span id="cb2-184"><a href="#cb2-184" aria-hidden="true" tabindex="-1"></a>                <span class="st">"ay"</span>: ay,</span>
+    <span id="cb2-185"><a href="#cb2-185" aria-hidden="true" tabindex="-1"></a>                <span class="st">"az"</span>: az,</span>
+    <span id="cb2-186"><a href="#cb2-186" aria-hidden="true" tabindex="-1"></a>            }</span>
+    <span id="cb2-187"><a href="#cb2-187" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-188"><a href="#cb2-188" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.rows.append(row)</span>
+    <span id="cb2-189"><a href="#cb2-189" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-190"><a href="#cb2-190" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.data_label.setText(</span>
+    <span id="cb2-191"><a href="#cb2-191" aria-hidden="true" tabindex="-1"></a>                <span class="ss">f&quot;Temp: </span><span class="sc">{</span>temp<span class="sc">:.2f}</span><span class="ss"> °C | &quot;</span></span>
+    <span id="cb2-192"><a href="#cb2-192" aria-hidden="true" tabindex="-1"></a>                <span class="ss">f&quot;ax: </span><span class="sc">{</span>ax<span class="sc">:.3f}</span><span class="ss">, ay: </span><span class="sc">{</span>ay<span class="sc">:.3f}</span><span class="ss">, az: </span><span class="sc">{</span>az<span class="sc">:.3f}</span><span class="ss">&quot;</span></span>
+    <span id="cb2-193"><a href="#cb2-193" aria-hidden="true" tabindex="-1"></a>            )</span>
+    <span id="cb2-194"><a href="#cb2-194" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-195"><a href="#cb2-195" aria-hidden="true" tabindex="-1"></a>            t <span class="op">=</span> esp_time_ms <span class="op">/</span> <span class="fl">1000.0</span></span>
+    <span id="cb2-196"><a href="#cb2-196" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.time_data.append(t)</span>
+    <span id="cb2-197"><a href="#cb2-197" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.temp_data.append(temp)</span>
+    <span id="cb2-198"><a href="#cb2-198" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-199"><a href="#cb2-199" aria-hidden="true" tabindex="-1"></a>            <span class="co"># 只顯示最近 500 筆，避免圖越跑越慢</span></span>
+    <span id="cb2-200"><a href="#cb2-200" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.time_data <span class="op">=</span> <span class="va">self</span>.time_data[<span class="op">-</span><span class="dv">500</span>:]</span>
+    <span id="cb2-201"><a href="#cb2-201" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.temp_data <span class="op">=</span> <span class="va">self</span>.temp_data[<span class="op">-</span><span class="dv">500</span>:]</span>
+    <span id="cb2-202"><a href="#cb2-202" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-203"><a href="#cb2-203" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.temp_curve.setData(<span class="va">self</span>.time_data, <span class="va">self</span>.temp_data)</span>
+    <span id="cb2-204"><a href="#cb2-204" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-205"><a href="#cb2-205" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elif</span> parts[<span class="dv">0</span>] <span class="op">==</span> <span class="st">"ACK"</span>:</span>
+    <span id="cb2-206"><a href="#cb2-206" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.data_label.setText(<span class="ss">f&quot;ESP32 回覆: </span><span class="sc">{</span>line<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+    <span id="cb2-207"><a href="#cb2-207" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-208"><a href="#cb2-208" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elif</span> parts[<span class="dv">0</span>] <span class="op">==</span> <span class="st">"ERR"</span>:</span>
+    <span id="cb2-209"><a href="#cb2-209" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.data_label.setText(<span class="ss">f&quot;ESP32 錯誤: </span><span class="sc">{</span>line<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+    <span id="cb2-210"><a href="#cb2-210" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-211"><a href="#cb2-211" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+    <span id="cb2-212"><a href="#cb2-212" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.data_label.setText(<span class="ss">f&quot;未知資料: </span><span class="sc">{</span>line<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+    <span id="cb2-213"><a href="#cb2-213" aria-hidden="true" tabindex="-1"></a></span>
+      <span class="kw">def</span> export_csv(<span class="va">self</span>):</span>
+    <span id="cb2-215"><a href="#cb2-215" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> <span class="va">self</span>.rows:</span>
+    <span id="cb2-216"><a href="#cb2-216" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.data_label.setText(<span class="st">"沒有資料可以匯出"</span>)</span>
+    <span id="cb2-217"><a href="#cb2-217" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span></span>
+    <span id="cb2-218"><a href="#cb2-218" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-219"><a href="#cb2-219" aria-hidden="true" tabindex="-1"></a>        filename, _ <span class="op">=</span> QFileDialog.getSaveFileName(</span>
+    <span id="cb2-220"><a href="#cb2-220" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>,</span>
+    <span id="cb2-221"><a href="#cb2-221" aria-hidden="true" tabindex="-1"></a>            <span class="st">"儲存 CSV"</span>,</span>
+    <span id="cb2-222"><a href="#cb2-222" aria-hidden="true" tabindex="-1"></a>            <span class="st">"esp32_log.csv"</span>,</span>
+    <span id="cb2-223"><a href="#cb2-223" aria-hidden="true" tabindex="-1"></a>            <span class="st">"CSV Files (*.csv)"</span></span>
+    <span id="cb2-224"><a href="#cb2-224" aria-hidden="true" tabindex="-1"></a>        )</span>
+    <span id="cb2-225"><a href="#cb2-225" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-226"><a href="#cb2-226" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> filename:</span>
+    <span id="cb2-227"><a href="#cb2-227" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span></span>
+    <span id="cb2-228"><a href="#cb2-228" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-229"><a href="#cb2-229" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> <span class="bu">open</span>(filename, <span class="st">"w"</span>, newline<span class="op">=</span><span class="st">""</span>, encoding<span class="op">=</span><span class="st">"utf-8-sig"</span>) <span class="im">as</span> f:</span>
+    <span id="cb2-230"><a href="#cb2-230" aria-hidden="true" tabindex="-1"></a>            writer <span class="op">=</span> csv.DictWriter(</span>
+    <span id="cb2-231"><a href="#cb2-231" aria-hidden="true" tabindex="-1"></a>                f,</span>
+    <span id="cb2-232"><a href="#cb2-232" aria-hidden="true" tabindex="-1"></a>                fieldnames<span class="op">=</span>[<span class="st">"pc_time"</span>, <span class="st">"esp_time_ms"</span>, <span class="st">"temp"</span>, <span class="st">"ax"</span>, <span class="st">"ay"</span>, <span class="st">"az"</span>]</span>
+    <span id="cb2-233"><a href="#cb2-233" aria-hidden="true" tabindex="-1"></a>            )</span>
+    <span id="cb2-234"><a href="#cb2-234" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-235"><a href="#cb2-235" aria-hidden="true" tabindex="-1"></a>            writer.writeheader()</span>
+    <span id="cb2-236"><a href="#cb2-236" aria-hidden="true" tabindex="-1"></a>            writer.writerows(<span class="va">self</span>.rows)</span>
+    <span id="cb2-237"><a href="#cb2-237" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-238"><a href="#cb2-238" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.data_label.setText(<span class="ss">f&quot;已匯出: </span><span class="sc">{</span>filename<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+    <span id="cb2-239"><a href="#cb2-239" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-240"><a href="#cb2-240" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb2-241"><a href="#cb2-241" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">"__main__"</span>:</span>
+    <span id="cb2-242"><a href="#cb2-242" aria-hidden="true" tabindex="-1"></a>    app <span class="op">=</span> QApplication(sys.argv)</span>
+    <span id="cb2-243"><a href="#cb2-243" aria-hidden="true" tabindex="-1"></a>    window <span class="op">=</span> ESP32ControlUI()</span>
+    <span id="cb2-244"><a href="#cb2-244" aria-hidden="true" tabindex="-1"></a>    window.show()</span>
+    <span id="cb2-245"><a href="#cb2-245" aria-hidden="true" tabindex="-1"></a>    sys.exit(app.<span class="bu">exec</span>())</span></code></pre></div>
+    </section>
+    <section><h2>韌體</h2>
+    <p>燒入esp32</p>
+    <div class="sourceCode" id="cb3"><pre
+    class="sourceCode c++"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="at">const</span> <span class="dt">int</span> LED_PIN <span class="op">=</span> <span class="dv">2</span><span class="op">;</span></span>
+    <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="dt">bool</span> running <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+    <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="dt">int</span> pwmValue <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+    <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="dt">unsigned</span> <span class="dt">long</span> lastSendTime <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+    <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="at">const</span> <span class="dt">unsigned</span> <span class="dt">long</span> sendInterval <span class="op">=</span> <span class="dv">50</span><span class="op">;</span> <span class="co">// 50 ms = 20 Hz</span></span>
+    <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> setup<span class="op">()</span> <span class="op">{</span></span>
+    <span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  Serial<span class="op">.</span>begin<span class="op">(</span><span class="dv">115200</span><span class="op">);</span></span>
+    <span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  pinMode<span class="op">(</span>LED_PIN<span class="op">,</span> OUTPUT<span class="op">);</span></span>
+    <span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  <span class="co">// 如果你有感測器，例如 MPU6050 / BME280 / GPS</span></span>
+    <span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  <span class="co">// 在這裡初始化</span></span>
+    <span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+    <span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> loop<span class="op">()</span> <span class="op">{</span></span>
+    <span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>  readCommandFromPC<span class="op">();</span></span>
+    <span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>running<span class="op">)</span> <span class="op">{</span></span>
+    <span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    sendSensorData<span class="op">();</span></span>
+    <span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+    <span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+    <span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> readCommandFromPC<span class="op">()</span> <span class="op">{</span></span>
+    <span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>Serial<span class="op">.</span>available<span class="op">())</span> <span class="op">{</span></span>
+    <span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>    String cmd <span class="op">=</span> Serial<span class="op">.</span>readStringUntil<span class="op">(</span><span class="ch">'</span><span class="sc">\n</span><span class="ch">'</span><span class="op">);</span></span>
+    <span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>    cmd<span class="op">.</span>trim<span class="op">();</span></span>
+    <span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="op">(</span>cmd <span class="op">==</span> <span class="st">"START"</span><span class="op">)</span> <span class="op">{</span></span>
+    <span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>      running <span class="op">=</span> <span class="kw">true</span><span class="op">;</span></span>
+    <span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>      Serial<span class="op">.</span>println<span class="op">(</span><span class="st">"ACK,START"</span><span class="op">);</span></span>
+    <span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+    <span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="cf">if</span> <span class="op">(</span>cmd <span class="op">==</span> <span class="st">"STOP"</span><span class="op">)</span> <span class="op">{</span></span>
+    <span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>      running <span class="op">=</span> <span class="kw">false</span><span class="op">;</span></span>
+    <span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>      Serial<span class="op">.</span>println<span class="op">(</span><span class="st">"ACK,STOP"</span><span class="op">);</span></span>
+    <span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+    <span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="cf">if</span> <span class="op">(</span>cmd<span class="op">.</span>startsWith<span class="op">(</span><span class="st">"SET_PWM"</span><span class="op">))</span> <span class="op">{</span></span>
+    <span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>      <span class="dt">int</span> spaceIndex <span class="op">=</span> cmd<span class="op">.</span>indexOf<span class="op">(</span><span class="ch">' '</span><span class="op">);</span></span>
+    <span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> <span class="op">(</span>spaceIndex <span class="op">&gt;</span> <span class="dv">0</span><span class="op">)</span> <span class="op">{</span></span>
+    <span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>        pwmValue <span class="op">=</span> cmd<span class="op">.</span>substring<span class="op">(</span>spaceIndex <span class="op">+</span> <span class="dv">1</span><span class="op">).</span>toInt<span class="op">();</span></span>
+    <span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>        pwmValue <span class="op">=</span> constrain<span class="op">(</span>pwmValue<span class="op">,</span> <span class="dv">0</span><span class="op">,</span> <span class="dv">255</span><span class="op">);</span></span>
+    <span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>        <span class="co">// 這裡可以換成控制馬達、伺服、LED、繼電器等</span></span>
+    <span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>        analogWrite<span class="op">(</span>LED_PIN<span class="op">,</span> pwmValue<span class="op">);</span></span>
+    <span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>        Serial<span class="op">.</span>print<span class="op">(</span><span class="st">"ACK,SET_PWM,"</span><span class="op">);</span></span>
+    <span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>        Serial<span class="op">.</span>println<span class="op">(</span>pwmValue<span class="op">);</span></span>
+    <span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>      <span class="op">}</span></span>
+    <span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+    <span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> <span class="op">{</span></span>
+    <span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>      Serial<span class="op">.</span>print<span class="op">(</span><span class="st">"ERR,UNKNOWN_CMD,"</span><span class="op">);</span></span>
+    <span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>      Serial<span class="op">.</span>println<span class="op">(</span>cmd<span class="op">);</span></span>
+    <span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+    <span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+    <span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+    <span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> sendSensorData<span class="op">()</span> <span class="op">{</span></span>
+    <span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>  <span class="dt">unsigned</span> <span class="dt">long</span> now <span class="op">=</span> millis<span class="op">();</span></span>
+    <span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> <span class="op">(</span>now <span class="op">-</span> lastSendTime <span class="op">&gt;=</span> sendInterval<span class="op">)</span> <span class="op">{</span></span>
+    <span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>    lastSendTime <span class="op">=</span> now<span class="op">;</span></span>
+    <span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>    <span class="co">// 這裡先用假資料，你之後換成實際感測器資料</span></span>
+    <span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> temp <span class="op">=</span> <span class="fl">26.4</span><span class="op">;</span></span>
+    <span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> ax <span class="op">=</span> <span class="fl">0.01</span><span class="op">;</span></span>
+    <span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> ay <span class="op">=</span> <span class="op">-</span><span class="fl">0.02</span><span class="op">;</span></span>
+    <span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>    <span class="dt">float</span> az <span class="op">=</span> <span class="fl">9.81</span><span class="op">;</span></span>
+    <span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a></span>
+    <span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a>    Serial<span class="op">.</span>print<span class="op">(</span><span class="st">"DATA,"</span><span class="op">);</span></span>
+    <span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>    Serial<span class="op">.</span>print<span class="op">(</span>now<span class="op">);</span></span>
+    <span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a>    Serial<span class="op">.</span>print<span class="op">(</span><span class="st">","</span><span class="op">);</span></span>
+    <span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a>    Serial<span class="op">.</span>print<span class="op">(</span>temp<span class="op">,</span> <span class="dv">3</span><span class="op">);</span></span>
+    <span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a>    Serial<span class="op">.</span>print<span class="op">(</span><span class="st">","</span><span class="op">);</span></span>
+    <span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a>    Serial<span class="op">.</span>print<span class="op">(</span>ax<span class="op">,</span> <span class="dv">3</span><span class="op">);</span></span>
+    <span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a>    Serial<span class="op">.</span>print<span class="op">(</span><span class="st">","</span><span class="op">);</span></span>
+    <span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a>    Serial<span class="op">.</span>print<span class="op">(</span>ay<span class="op">,</span> <span class="dv">3</span><span class="op">);</span></span>
+    <span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a>    Serial<span class="op">.</span>print<span class="op">(</span><span class="st">","</span><span class="op">);</span></span>
+    <span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a>    Serial<span class="op">.</span>println<span class="op">(</span>az<span class="op">,</span> <span class="dv">3</span><span class="op">);</span></span>
+    <span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+    <span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+    </section>
+    <section><h2>修復與重整</h2></section>
+    </main>
+    <footer><a href="index.html">主頁</a></footer>
+    </body>
+    </html>
